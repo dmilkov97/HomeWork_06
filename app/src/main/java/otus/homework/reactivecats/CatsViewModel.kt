@@ -1,10 +1,15 @@
 package otus.homework.reactivecats
 
 import android.content.Context
+import android.net.http.HttpException
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.disposables.CompositeDisposable
+import io.reactivex.schedulers.Schedulers
+import okio.IOException
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -17,28 +22,37 @@ class CatsViewModel(
 
     private val _catsLiveData = MutableLiveData<Result>()
     val catsLiveData: LiveData<Result> = _catsLiveData
+    private val сompositeDisposable = CompositeDisposable()
+    private var _catsService: CatsService = catsService
 
     init {
-        catsService.getCatFact().enqueue(object : Callback<Fact> {
-            override fun onResponse(call: Call<Fact>, response: Response<Fact>) {
-                if (response.isSuccessful && response.body() != null) {
-                    _catsLiveData.value = Success(response.body()!!)
-                } else {
-                    _catsLiveData.value = Error(
-                        response.errorBody()?.string() ?: context.getString(
-                            R.string.default_error_text
-                        )
-                    )
-                }
-            }
+        getFacts()
 
-            override fun onFailure(call: Call<Fact>, t: Throwable) {
-                _catsLiveData.value = ServerError
-            }
-        })
     }
 
-    fun getFacts() {}
+    fun getFacts() {
+        val disposable = _catsService.getCatFact()
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe({
+                _catsLiveData.value = Success(it)
+            }, {
+                when (it) {
+                    is IOException -> {
+                        _catsLiveData.value = ServerError
+                    }
+                    else -> {
+                        _catsLiveData.value = Error(it.message.toString())
+                    }
+                }
+            })
+        сompositeDisposable.add(disposable)
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        сompositeDisposable.dispose()
+    }
 }
 
 class CatsViewModelFactory(
