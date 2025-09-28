@@ -24,6 +24,7 @@ class CatsViewModel(
     val catsLiveData: LiveData<Result> = _catsLiveData
     private val сompositeDisposable = CompositeDisposable()
     private var _catsService: CatsService = catsService
+    private val _localCatFactsGenerator = localCatFactsGenerator
 
     init {
         getFacts()
@@ -34,6 +35,7 @@ class CatsViewModel(
         val disposable = _catsService.getCatFact()
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
+            .onErrorResumeNext { _localCatFactsGenerator.generateCatFact() }
             .subscribe({
                 _catsLiveData.value = Success(it)
             }, {
@@ -46,6 +48,7 @@ class CatsViewModel(
                     }
                 }
             })
+
         сompositeDisposable.add(disposable)
     }
 
