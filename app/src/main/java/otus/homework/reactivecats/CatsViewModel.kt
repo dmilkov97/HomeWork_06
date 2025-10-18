@@ -19,8 +19,7 @@ import java.util.concurrent.TimeUnit
 
 class CatsViewModel(
     private val catsService: CatsService,
-    private val localCatFactsGenerator: LocalCatFactsGenerator,
-    context: Context
+    private val localCatFactsGenerator: LocalCatFactsGenerator
 ) : ViewModel() {
 
     private val _catsLiveData = MutableLiveData<Result>()
@@ -62,13 +61,12 @@ class CatsViewModel(
 
 class CatsViewModelFactory(
     private val catsRepository: CatsService,
-    private val localCatFactsGenerator: LocalCatFactsGenerator,
-    private val context: Context
+    private val localCatFactsGenerator: LocalCatFactsGenerator
 ) :
     ViewModelProvider.NewInstanceFactory() {
 
     override fun <T : ViewModel> create(modelClass: Class<T>): T =
-        CatsViewModel(catsRepository, localCatFactsGenerator, context) as T
+        CatsViewModel(catsRepository, localCatFactsGenerator) as T
 }
 
 sealed class Result
