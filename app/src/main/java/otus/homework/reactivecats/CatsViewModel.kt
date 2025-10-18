@@ -36,6 +36,7 @@ class CatsViewModel(
             .flatMapSingle {
                 catsService.getCatFact().onErrorResumeNext { localCatFactsGenerator.generateCatFact() }
             }
+            .subscribeOn(Schedulers.io())
             .distinctUntilChanged()
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe({
