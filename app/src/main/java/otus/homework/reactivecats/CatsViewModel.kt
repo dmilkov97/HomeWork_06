@@ -18,16 +18,14 @@ import retrofit2.Response
 import java.util.concurrent.TimeUnit
 
 class CatsViewModel(
-    catsService: CatsService,
-    localCatFactsGenerator: LocalCatFactsGenerator,
+    private val catsService: CatsService,
+    private val localCatFactsGenerator: LocalCatFactsGenerator,
     context: Context
 ) : ViewModel() {
 
     private val _catsLiveData = MutableLiveData<Result>()
     val catsLiveData: LiveData<Result> = _catsLiveData
     private val сompositeDisposable = CompositeDisposable()
-    private var _catsService: CatsService = catsService
-    private val _localCatFactsGenerator = localCatFactsGenerator
 
     init {
         getFacts()
@@ -37,7 +35,7 @@ class CatsViewModel(
 
         val disposable = Observable.interval(0, 2000, TimeUnit.MILLISECONDS)
             .flatMapSingle {
-                _catsService.getCatFact().onErrorResumeNext { _localCatFactsGenerator.generateCatFact() }
+                catsService.getCatFact().onErrorResumeNext { localCatFactsGenerator.generateCatFact() }
             }
             .distinctUntilChanged()
             .observeOn(AndroidSchedulers.mainThread())
